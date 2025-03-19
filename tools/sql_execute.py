@@ -14,7 +14,7 @@ class SQLExecuteTool(Tool):
         format = tool_parameters.get("format", "json")
 
         
-        if query.lower().startswith('select'):
+        if query.lower().startswith('select') or query.lower().startswith('desc') or query.lower().startswith('description'):
             rows = db.query(query)
             if format == 'json':
                 result = rows.as_dict()
