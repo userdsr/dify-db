@@ -14,7 +14,7 @@ class SQLExecuteTool(Tool):
         format = tool_parameters.get("format", "json")
 
         
-        if query.lower().startswith('select') or query.lower().startswith('desc') or query.lower().startswith('description'):
+        if query.lower().startswith('select'):
             rows = db.query(query)
             if format == 'json':
                 result = rows.as_dict()
@@ -35,6 +35,30 @@ class SQLExecuteTool(Tool):
             elif format == 'html':
                 result = rows.export('html').encode()
                 yield self.create_blob_message(result, meta={'mime_type': 'text/html', 'filename': 'result.html'})
+            else:
+                raise ValueError(f"Unsupported format: {format}")
+        elif query.lower().startswith('desc') or query.lower().startswith('describe'):
+            rows = db.query(desc_query)
+
+            if format == 'json':
+                result = rows.as_dict()
+                for r in result:
+                    yield self.create_json_message(r)
+            elif format == 'md':
+                result = str(rows.dataset)
+                yield self.create_text_message(result)
+            elif format == 'csv':
+                result = rows.export('csv').encode()
+                yield self.create_blob_message(result, meta={'mime_type': 'text/csv', 'filename': f'{table_name}_desc.csv'})
+            elif format == 'yaml':
+                result = rows.export('yaml').encode()
+                yield self.create_blob_message(result, meta={'mime_type': 'text/yaml', 'filename': f'{table_name}_desc.yaml'})
+            elif format == 'xlsx':
+                result = rows.export('xlsx')
+                yield self.create_blob_message(result, meta={'mime_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'filename': f'{table_name}_desc.xlsx'})
+            elif format == 'html':
+                result = rows.export('html').encode()
+                yield self.create_blob_message(result, meta={'mime_type': 'text/html', 'filename': f'{table_name}_desc.html'})
             else:
                 raise ValueError(f"Unsupported format: {format}")
         else:
